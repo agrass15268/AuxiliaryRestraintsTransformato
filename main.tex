@@ -16,6 +16,7 @@
 \usepackage{xcolor}
 \usepackage{soul}
 \usepackage{url}
+\usepackage{svg}
 
 \definecolor{Light}{gray}{.90}
 \sethlcolor{Light}
@@ -51,10 +52,19 @@
 
 \maketitle{}
 \end{titlepage}
-\begin{abstract}
+\section*{Abstract}
     
     For Protein-Ligand affinity at binding sites, the relative (and absolute) binding free energy is arguably the most important indicator. Traditionally, calculating these energies is done using comprehensive, GPU-assisted "soft-core" modelling. The 'common-core serial-atom-insertion' framework \texttt{Transformato} instead allows to efficiently divide the problem into sequential fragments solvable by traditional MD calculations. However, issues arise when ligands leave the binding site during simulation. This has been addressed by adding restraints to the system.
-\end{abstract}
+\vspace{\fill}
+\section*{Notes}
+\noindent\begin{minipage}{0.7\textwidth}
+The data underlying this thesis may be accessed at github under \url{https://github.com/agrass15268/AuxiliaryRestraintsTransformato/tree/data} or with the QR - Code to the right.
+\end{minipage}
+\hspace{0.1\textwidth}
+\begin{minipage}{0.2\textwidth}
+\includesvg[height=2cm]{qrcode}
+\end{minipage}
+\newpage
 
 \begingroup
 \let\clearpage\relax
@@ -82,6 +92,88 @@ Above, in Figure \Ref{fig:vmdrender} you can see the effects rendering a molecul
 
 
 \subsection{Basics of Molecular Dynamics Modeling}
+
+Since the discovery of cells, the inner workings of biological systems have always been a mystery science has raced to solve. While of course physical methods have allowed some degree of monitoring biochemical processes, these have significant limits - most glaringly being limited to actually physically-present structures. With Molecular Dynamics (MD) on the other hand, it is entirely possible to observe molecular interactions as they would happen in reality - at the leisure and convenience of the observer, with an unmatched resolution and clarity, and without the need to synthesize a single atom - the so-called \emph{ab silico} - approach.
+
+In general, MD aims to simulate the movement of atoms in a molecular system over time, governed by the physical interactions present in the molecule \supercite{Hollingsworth2018Sep}. Unlike quantum chemistry simulations, which try to calculate interactions using various approximations or even solutions of the Schrödinger equation, MD simulations have no pretensions of being an exact science. Instead, forces are approximated by what are essentially the mechanical principles of Newton: Atoms are perfect spheres, with mass and charges, and all their interactions are defined by a set of forces governing the interactions of specific types of atoms. As such, the kinetic energy of an MD system is simply the kinetic energy of atom masses at speed, and their potential energy defined by the potentials governing their interactions.
+
+For almost all force fields, forces in MD simulations may be divided into two parts - \emph{bonded} and \emph{nonbonded} interactions. These are often used synonymously with \emph{intermolecular} and \emph{intramolecular} forces, but are far from the same - it is quite possible, and especially in biological systems the rule more than the exception, that nonbonded interactions contribute a significant part to the intramolecular structure.
+
+Bonded forces are generally given explicitly for each atom types. They are:
+\begin{itemize}
+    \item Bonds (across two atoms)
+    \item Angles (the angle across three atoms)
+    \item Dihedrals (the angle across four atoms)
+    \item Impropers (the angle of a fourth atom being out-of-plane with the other three)
+\end{itemize}
+
+All of which are defined in \emph{parameter files}, which contain the force parameters for each of these.
+
+\begin{figure}
+\tiny
+\begin{verbatim}
+BONDS
+CG1N1  CG2R51  375.00     1.4220 ! DCG, yxu, RNA
+CG1N1  CG2R61  345.00     1.4350 ! 3CYP, 3-Cyanopyridine (PYRIDINE pyr-CN) (MP2 by kevo)
+CG1N1  CG321   400.00     1.4700 ! CYU, from CG1N1 CG331, yxu, RNA
+CG1N1  CG331   400.00     1.4700 ! ACN, acetonitrile, kevo
+CG1N1  NG1T1  1053.00     1.1800 ! ACN, acetonitrile; 3CYP, 3-Cyanopyridine (PYRIDINE pyr-CN) (MP2 by kevo)
+CG1N1  SG311   328.79     1.7011 ! XCN, by ac_aa            
+
+ANGLES
+CG2R51 CG1N1  NG1T1    40.00    180.00 ! DCG, yxu, RNA
+CG2R61 CG1N1  NG1T1    40.00    180.00 ! 3CYP, 3-Cyanopyridine (PYRIDINE pyr-CN), yin
+CG321  CG1N1  NG1T1    21.20    180.00 ! CYU, from CG331 CG1N1 NG1T1, yxu, RNA
+CG331  CG1N1  NG1T1    21.20    180.00 ! ACN, acetonitrile, kevo
+NG1T1  CG1N1  SG311    40.70    179.93 ! XCN, by ac_aa                
+CG1T1  CG1T1  CG331    19.00    180.00 ! 2BTY, 2-butyne, kevo
+CG1T2  CG1T1  CG2D1    11.00    180.00 ! BEYN, pchat
+CG1T2  CG1T1  CG321    11.00    180.00 ! BUTY , PNTY, HPTY, HXYN,OCTY , pchat
+
+DIHEDRALS
+NG1T1  CG1N1  CG2R61 CG2R61  0.0100 2    0.00 ! CNP2, by ac_aa
+NG1T1  CG1N1  SG311  CG321   0.0060 1    0.00 ! XCN, by ac_aa
+CG2R53 CG251O CG25C1 CG2R53     6.4000  2   180.00 ! OIRD, oxindol-3-ylidene rhodanine, kevo & xxwy
+CG2R53 CG251O CG25C1 CG2RC0     6.4000  2   180.00 ! OIRD, oxindol-3-ylidene rhodanine, kevo & xxwy
+NG2R53 CG251O CG25C1 CG2R53     3.4000  2   180.00 ! OIHY, 5-(oxindol-3-ylidene)hydantoin, complete ring system, xxwy
+NG2R53 CG251O CG25C1 CG2RC0     3.4000  2   180.00 ! OIHY, 5-(oxindol-3-ylidene)hydantoin, complete ring system, xxwy
+SG311  CG251O CG25C1 CG2R53     6.4000  2   180.00 ! OIRD, oxindol-3-ylidene rhodanine, kevo & xxwy
+SG311  CG251O CG25C1 CG2RC0     6.4000  2   180.00 ! OIRD, oxindol-3-ylidene rhodanine, kevo & xxwy
+
+IMPROPERS
+CG2D1  CG331  NG2D1  HGA4      25.00  0     0.00 ! SCH1, xxwy
+CG2D1  CG331  NG2P1  HGR52     18.00  0     0.00 ! SCH2, xxwy
+CG2D1O CG2DC1 CG2O1  NG2S1   28.3025 0    0.00 ! DYAP, by ac_aa              
+CG2D1O CG331  NG2D1  SG311   18.8025 0    0.00 ! FZN, by ac_aa
+\end{verbatim}
+   \caption{Excerpt from a parameter file created by CGenFF with a few definitions from bonds, angles dihedrals and impropers each.}
+    \label{fig:parmfile}
+\end{figure}
+
+As apparent in figure \ref{fig:parmfile}, force-field parameter files are structured very simply: The first few columns define the "atom types" for which a given set of parameters is valid. The others define the numeric value of the various parameters for the potential; for simple bonds for example the first value denotes the force constant, and the second the equilibrium distance. These values are inserted into a harmonic potential and then used to calculate the force. 
+
+
+In a MD system, the combined potential energy is simply the sum of bonded and nonbonded potential energy terms, both of which are dependent on the relative positions $(\Vec{r})$ of the atoms:
+
+
+\begin{equation}
+    \sum U (\Vec{r}) = \sum U_{bonded} (\Vec{r}) + \sum U_{nonbonded} (\Vec{r})
+\end{equation}
+
+The sum for bonded potentials is the sum of the individual potentials:
+
+\begin{equation}
+    \sum U_{bonded} (\Vec{r})=\sum U_{bonds} (\Vec{r}) + \sum U_{angle} (\Vec{r}) + \sum U_{torsion} (\Vec{r}) +\sum U_{improper} (\Vec{r})
+\end{equation}
+
+Whereas the nonbonded potentials \emph{generally} consist of electrostatic (Morse) and VdW (Lennard-Jones) Potentials.
+
+\begin{equation}
+    \sum U_{nonbonded} (\Vec{r})=\sum U_{electrostatics} (\Vec{r}) + \sum U_{Lennard-Jones} (\Vec{r})
+\end{equation}
+
+
+
 
 \subsection{Relative and absolute binding free energies}
 
@@ -113,7 +205,9 @@ These mostly solve the problem, as there can now be no division by zero and the 
 \section{The common-core serial-atom-insertion framework {\texttt{Transformato}}}
 To address these problems, the common-core serial-atom-insertion framework was conceptualised and implemented in \texttt{Transformato}. \texttt{Transformato} is engine-agnostic - its outputs being designed to be computable with any of the widely-used Molecular Dynamics engines (openMM, CHARMM, AMBER, GROMACS etc.), though preprovided simulation scripts are currently only available for CHARMM and openMM.
 
+
 \subsection{Theoretical Principles}
+\subsection{Theoretical consideration for Restraints in \texttt{Transformato}}
 \subsection{Usage}
 Installing \texttt{Transformato} is fairly straightforward: it requires a working installation of \texttt{conda} and \texttt{python}. Using \texttt{git clone}, download the package from the repository\footnote{\url{https://github.com/JohannesKarwou/Transformato}} and run \texttt{python setup.py install}. This will install a conda environment called \texttt{fep} consisting of \texttt{Transformato} and all its dependencies. Activate the environment and you're done.
 
