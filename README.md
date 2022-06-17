@@ -3,6 +3,8 @@ BSc. Thesis: Relative Binding Free Energy Calculations using Auxiliary Restraint
 
 This branch contains the underlying data for statistical analysis and plots. Due to size constraints, no trajectories are stored here (or anywhere, unless the CBC doesnt clean them out).
 
+These files were generally created using the tools in agrass15268/transformato-helpertools.
+
 ### General simulation parameters:
 
 - Hydrogen Mass Repartitioning (either via CHARMMGUI or parmed) was used for all simulations
@@ -14,3 +16,5 @@ This branch contains the underlying data for statistical analysis and plots. Due
 ### File types:
 
 - ma_\*.csv files: Contain the results of the mbar analysis, alongside a variety of restraint parameters and the timescale
+- relativedistances/\*.csv files: In lieu of trajectory files, these contain csv files of the relative distances relative to the initial distance experienced by the restraints.
+  For replicates without restraints, restraints from an ex3 run were used as baseline comparision. Only a subset of trajectory frames was analysed, with a step of 50.
