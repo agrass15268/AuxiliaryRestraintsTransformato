@@ -3,7 +3,7 @@ BSc. Thesis: Relative Binding Free Energy Calculations using Auxiliary Restraint
 
 This branch contains the underlying data for statistical analysis and plots. Due to size constraints, no trajectories are stored here (or anywhere, unless the CBC doesnt clean them out).
 
-These files were generally created using the tools in agrass15268/transformato-helpertools.
+These files were generally created using the tools in [transformato-helpers](https://github.com/agrass15268/transformato-helpers)
 
 ### General simulation parameters:
 
