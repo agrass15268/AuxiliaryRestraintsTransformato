@@ -2,7 +2,8 @@
 
 \usepackage[utf8]{inputenc}
 
-\usepackage[backend=biber,style=chem-biochem]{biblatex}
+\inputencoding{utf8}
+
 \usepackage{blindtext}
 \usepackage{graphicx}
 \usepackage{abstract}
@@ -17,6 +18,7 @@
 \usepackage{soul}
 \usepackage{url}
 \usepackage{svg}
+\usepackage{amsmath}
 
 \definecolor{Light}{gray}{.90}
 \sethlcolor{Light}
@@ -25,8 +27,12 @@
 
 \newcommand{\code}[1]{\texttt{\hl{#1}}}
 
-\addbibresource{BSc_Thesis_Bibliography.bib}
-\title{Relative binding free energy calculations of restrained systems in the 'common-core serial-atom-insertion' framework}
+\usepackage[backend=biber,style=chem-acs,bibencoding=utf8]{biblatex}
+\DeclareFieldInputHandler{note}{% deletes the unneccessary Publisher/etex entries
+  \def\NewValue{}}
+
+\addbibresource{references_zotero.bib}
+\title{Implementation of Auxiliary Restraints for Relative Binding Free Energy Calculations in the 'common-core serial-atom-insertion' Framework \texttt{Transformato}}
 \author{Supervised by: Univ-Prof. Dr. Stefan Boresch\\Submitted by: \hspace{26mm}Alexander Grasser}
 \date{June 2022}
 \publishers{Department of Computational Biological Chemistry\\University of Vienna\\\includegraphics[width=5cm]{Uni_Logo_2016.jpg} }
@@ -58,7 +64,7 @@
 \vspace{\fill}
 \section*{Notes}
 \noindent\begin{minipage}{0.7\textwidth}
-The data underlying this thesis may be accessed at github under \url{https://github.com/agrass15268/AuxiliaryRestraintsTransformato/tree/data} or with the QR - Code to the right.
+The data compiled for this thesis may be accessed at GitHub under \url{https://github.com/agrass15268/AuxiliaryRestraintsTransformato/tree/data} or with the QR - Code to the right.
 \end{minipage}
 \hspace{0.1\textwidth}
 \begin{minipage}{0.2\textwidth}
@@ -68,7 +74,7 @@ The data underlying this thesis may be accessed at github under \url{https://git
 \vspace{1cm}
 
 \noindent\begin{minipage}{0.7\textwidth}
-Source code and packaged versions of the \texttt{Transformato} package may be retrieved from its github repository at  \url{https://github.com/wiederm/transformato} or with the QR - Code to the right.
+Source code and packaged versions of the \texttt{Transformato} package may be retrieved from its GitHub repository at  \url{https://github.com/wiederm/transformato} or with the QR - Code to the right.
 \end{minipage}
 \hspace{0.1\textwidth}
 \begin{minipage}{0.2\textwidth}
@@ -97,26 +103,28 @@ Almost since the inception of computer-assisted molecular modeling, a significan
     \label{fig:fesvstrafo}
 \end{figure}
 
-Recently, the package \texttt{Transformato} was introduced by Karwounopoulos, Wieder, Braunsfeld, and Boresch\supercite{Karwou2022Jun,braunsfeldImplementationTestingCHARMM,Wieder2022Jun}, implementing a novel approach bypassing these problems. Being a python package, \texttt{Transformato} is easy to install, use, and modify to adapt to system-specific challenges or support different MD engines. Instead of full alchemical transformations of one compound into the other, it instead relies on computing a \emph{common core} (CC) between the two physical endpoints. Summing up the energy differences between the CC and the endstates allows calculation of the free energy difference between the endstates themselves (see Fig. \ref{fig:fesvstrafo}).
+Recently, the package \texttt{Transformato} was introduced by Karwounopoulos, Wieder, Braunsfeld, and Boresch\cite{Karwou2022Jun,braunsfeldImplementationTestingCHARMM,Wieder2022Jun}, implementing a novel approach bypassing these problems. Being a python package, \texttt{Transformato} is easy to install, use, and modify to adapt to system-specific challenges or support different MD engines. Instead of full alchemical transformations of one compound into the other, it instead relies on computing a \emph{common core} (CC) between the two physical endpoints. Summing up the energy differences between the CC and the endstates allows calculation of the free energy difference between the endstates themselves (see Fig. \ref{fig:fesvstrafo}).
 
 
 
-With this method, atoms outside the common core are transformed into so-called \emph{dummy atoms}, a term for particles that, while still present in the simulated system, no longer have nonbonded interactions and are only kept in place by weak bonded interactions. If handled properly, these do not contribute to the calculated free energies\supercite{fleckDummyAtomsAlchemical2021}.
+With this method, atoms outside the common core are transformed into so-called \emph{dummy atoms}, a term for particles that, while still present in the simulated system, no longer have nonbonded interactions and are only kept in place by weak bonded interactions. If handled properly, these do not contribute to the calculated free energies\cite{fleckDummyAtomsAlchemical2021}.
 
-These dummy atoms are introduced along several intermediate states, alongside various levels of scaling of nonbonded interactions. These intermediate states are then analysed using the \emph{multistate Bennett Acceptance Ratio}\supercite{Shirts2008Sep} (mBAR), an expanded version of Bennet's acceptance ratio\supercite{Bennett1976Oct}, ideally giving a close approximation of $\Delta\Delta G$. However, mBAR requires topological overlap between the various intermediate states - a problematic proposition if the ligand is liable to abscond its binding site during the simulation timeframe. To prevent this, an additional module \code{restraints.py} was developed and integrated into transformato. It allows the user to either request automatic restraints or define their own. These restraints as implemented act upon the center of mass of the selected ligand atoms, restraining them to their original positions.
+These dummy atoms are introduced along several intermediate states, alongside various levels of scaling of nonbonded interactions. These intermediate states are then analysed using the \emph{multistate Bennett Acceptance Ratio}\cite{Shirts2008Sep} (mBAR), an expanded version of Bennet's acceptance ratio\cite{Bennett1976Oct}, ideally giving a close approximation of $\Delta\Delta G$. However, mBAR requires topological overlap between the various intermediate states - a problematic proposition if the ligand is liable to abscond its binding site during the simulation timeframe. To prevent this, an additional module \code{restraints.py} was developed and integrated into transformato. It allows the user to either request automatic restraints or define their own. These restraints as implemented act upon the center of mass of the selected ligand atoms, restraining them to their original positions.
 
 To suit a variety of sampling needs, both harmonic and flat-bottomed energy potentials may be used as energy functions for these restraints. This way, a ligand may be specifically allowed to sample the entire binding site without being constrained, yet never leave it. This allows for better sampling and longer runtimes even at increased temperatures, without fear of losing the ligand.
 \chapter{Theory}
 
 \section{Theoretical Background}
+Simulating the dynamics of (bio-)chemical processes (referred to as \emph{Molecular Dynamics} (MD)) in their entirety can be divided into two classes: calculations utilizing \emph{Quantum Mechanics} (QM), where interactions are calculated according to Schrödinger's Equation, and \emph{Molecular Mechanics} (MM), where calculations instead use as simplified mass-charge-force model to calculate potential energies. While there is no doubt that methods utilizing QM can deliver more accurate results (especially if using "pure" QM and not using semi-empirical methods), computational costs prohibit their use in large biological systems ("large" in this context referring to even just a single protein and its ligand). Thus, for free energy calculations of the sort \texttt{transformato} is designed to accomplish, QM methods are unsuitable - which leaves Molecular Mechanics.
 
+Which is not to say that QM has no place in MD simulations. QM is routinely used to improve geometries and improve calculation precision, with QM/MM methods existing that allow MM and QM calculations to run in the same MD simulation, using QM for sites of interest (typically binding sites) and MM for everything else. Perhaps most importantly, the force fields used for MD simulations start out as QM calculations that are then fitted to experimental data. Still, for this thesis, only MD based on Molecular Mechanics was used.
 
 
 \begin{figure}[h]
 \centering
  \includegraphics[height=4cm]{2oj9_render_complex.png} 
 
-\caption{VMD Render of 2OJ9. Highlighted in red: The ligand BMI}
+\caption{Render of 2OJ9. Highlighted in red: The ligand BMI}
 \label{fig:vmdrender}
 \end{figure}
 Above, in Figure \Ref{fig:vmdrender} you can see the effects rendering a molecule has.
@@ -126,9 +134,9 @@ Above, in Figure \Ref{fig:vmdrender} you can see the effects rendering a molecul
 
 Since the discovery of cells, the inner workings of biological systems have always been a mystery science has raced to solve. While of course, physical methods have allowed some degree of monitoring biochemical processes, these have significant limits - most glaringly being limited to physically-present structures. With Molecular Dynamics (MD) on the other hand, it is entirely possible to observe molecular interactions as they would happen in reality - at the leisure and convenience of the observer, with an unmatched resolution and clarity, and without the need to synthesize a single atom - the so-called \emph{ab silico} - approach.
 
-In general, MD aims to simulate the movement of atoms in a molecular system over time, governed by the physical interactions present in the molecule \supercite{Hollingsworth2018Sep}. Unlike quantum chemistry simulations, which try to calculate interactions using various approximations or even solutions of the Schrödinger equation, MD simulations have no pretensions of being an exact science. Instead, forces are approximated by what are essentially the mechanical principles of Newton: Atoms are perfect spheres, with mass and charges, and all their interactions are defined by a set of forces governing the interactions of specific types of atoms. As such, the kinetic energy of an MD system is simply the kinetic energy of atom masses at speed, and their potential energy is defined by the potentials governing their interactions.
+In general, MD aims to simulate the movement of atoms in a molecular system over time, governed by the physical interactions present in the molecule \cite{Hollingsworth2018Sep}. Unlike quantum chemistry simulations, which try to calculate interactions using various approximations or even solutions of the Schrödinger equation, MM simulations have no pretensions of being an exact science. Instead, forces are approximated by what are essentially the mechanical principles of Newton: Atoms are perfect spheres, with mass and charges, and all their interactions are defined by a set of forces governing the interactions of specific types of atoms. As such, the kinetic energy of an MD system is simply the kinetic energy of atom masses at speed, and their potential energy is defined by the potentials governing their interactions.
 
-For almost all force fields, forces in MD simulations may be divided into two parts - \emph{bonded} and \emph{nonbonded} interactions. These are often used synonymously with \emph{intermolecular} and \emph{intramolecular} forces, but are far from the same - it is quite possible, and especially in biological systems the rule more than the exception, that nonbonded interactions contribute a significant part to the intramolecular structure.
+For almost all force fields, forces in MM simulations may be divided into two parts - \emph{bonded} and \emph{nonbonded} interactions. These are often used synonymously with \emph{intermolecular} and \emph{intramolecular} forces, but are far from the same - it is quite possible, and especially in biological systems the rule more than the exception, that nonbonded interactions contribute a significant part to the intramolecular structure.
 
 Bonded forces are generally given explicitly for each atom type. They are:
 \begin{itemize}
@@ -177,14 +185,14 @@ CG2D1  CG331  NG2P1  HGR52     18.00  0     0.00 ! SCH2, xxwy
 CG2D1O CG2DC1 CG2O1  NG2S1   28.3025 0    0.00 ! DYAP, by ac_aa              
 CG2D1O CG331  NG2D1  SG311   18.8025 0    0.00 ! FZN, by ac_aa
 \end{verbatim}
-   \caption{Excerpt from a parameter file created by CGenFF with a few definitions from bonds, angles dihedrals and impropers each.}
+   \caption{Excerpt from a parameter file created by CGenFF with a few definitions for bonds, angles dihedrals and impropers each.}
     \label{fig:parmfile}
 \end{figure}
 
 As apparent in figure \ref{fig:parmfile}, force-field parameter files are structured very simply: The first few columns define the "atom types" for which a given set of parameters is valid. The others define the numeric value of the various parameters for the potential; for simple bonds for example the first value denotes the force constant, and the second the equilibrium distance. These values are inserted into a harmonic potential and then used to calculate the force. 
 
 
-In a MD system, the combined potential energy is simply the sum of bonded and nonbonded potential energy terms, both of which are dependent on the relative positions $(\Vec{r})$ of the atoms:
+In a MD system, the combined potential energy is simply the sum of bonded and nonbonded potential energy terms, both of which are dependent on the relative positions $(\Vec{r})$ of the atoms. Transformato uses the Charmm General Force Field\cite{vanommeslaeghe_charmm_2010}, using the following potentials:
 
 
 \begin{equation}
@@ -194,7 +202,10 @@ In a MD system, the combined potential energy is simply the sum of bonded and no
 The sum for bonded potentials is the sum of the individual potentials:
 
 \begin{equation}
-    \sum U_{bonded} (\Vec{r})=\sum U_{bonds} (\Vec{r}) + \sum U_{angle} (\Vec{r}) + \sum U_{torsion} (\Vec{r}) +\sum U_{improper} (\Vec{r})
+\begin{aligned}
+    \sum U_{bonded} (\Vec{r})&= \sum U_{bonds} (\Vec{r}) + \sum U_{angle} (\Vec{r}) + \sum U_{torsion} (\Vec{r}) \\
+    &+\sum U_{improper} (\Vec{r})+\sum U_{Urey-Bradley} (\Vec{r})
+\end{aligned}
 \end{equation}
 
 Whereas the nonbonded potentials \emph{generally} consist of electrostatic (Morse) and VdW (Lennard-Jones) Potentials.
@@ -204,11 +215,25 @@ Whereas the nonbonded potentials \emph{generally} consist of electrostatic (Mors
 \end{equation}
 
 
+However, these equations do not offer the information we require. What we want is the movement of atoms across the time dimension (thus Molecular \emph{Dynamics}). However, these potentials are a significant part of the way there. To simulate a MM system, the following steps are necessary:
 
+\begin{enumerate}
+    \item Set up the system, giving each atom\footnote{While typical, this does not actually need to happen for each atom; historically, so-called \emph{united-atom} force fields were used and combined e.g. terminal methyl groups as a single entity for calculation purposes} an unique identifier, mass, and charge, along with bonded terms. Ideally, these should correspond to the ones in the actual atoms represented, though this is not necessary for all use cases (See the section on Hydrogen Mass Repartitioning for an example)
+    \item Give each of these atoms a random, small initial velocity to get them out of their equilibrium state.
+    \item Calculate the forces present from the various potentials of the atoms interacting with each other.
+    
+    This step is where the major differences between MM and QM occur: Whereas the forces for a MM simulation are simply the results of the potentials listed above, QM simulations need to solve $F=F(\Psi(\Vec{r}^p))$
+    \item Move atoms, apply velocities and acceleration according to the newly calculated forces
+    \item Apply temperature and pressure control along with boundary conditions as needed
+    \item Calculate physical parameters of interest (typically e.g. the total potential energy of the system)
+    \item Move time forward by the timestep chosen and repeat the process (sans initial setup)
+\end{enumerate}
+
+Following these steps results in positions for each atoms for every step you calculate. By combining these into a single file you get a \emph{trajectory}, containing the movements of your atoms along the entire simulation. However, trajectories typically do not contain every single calculated position, but rather only every n-th step, as trajectory files would otherwise be prohibitively large.
 
 \subsection{Relative and absolute binding free energies}
 
-Calculating the free energies, however, is a somewhat more problematic undertaking. For our purposes, we need to differentiate two types of free energy:
+Calculating the free energies from these trajectories, however, is a somewhat more problematic undertaking. For our purposes, we need to differentiate two types of free energy:
 \begin{itemize}
     \item \emph{solvation} free energies, which describe the energy difference between solvated and unsolvated compounds;
     \item \emph{binding} free energies, which describe the energy difference between a ligand bound to a complex, and an unbound one
@@ -225,12 +250,12 @@ This usually works rather well -  the shape of the potential ensures that no two
 
 Both more problematic and more common, however, is the case that two particles get very close to each other. In this case, the derivation $\langle \frac{\delta U}{\delta\lambda} \rangle$ may diverge, causing the entire simulation to become unstable. This is known as the \textit{van-der-Waals endpoint problem} (or \textit{-catastrophe}, for the more dramatically inclined).
 
-To avoid this problem, soft-core potentials were introduced as shown in Equation \ref{eq:ljsoftcore}\supercite{Beutler1994Jun}:
+To avoid this problem, soft-core potentials were introduced as shown in Equation \ref{eq:ljsoftcore}\cite{Beutler1994Jun}:
 \begin{equation}
 U_{LJ}^{SC}(r,\lambda)=(1-\lambda)(\frac{A}{(r^2 +\lambda \delta)^6 }-\frac{B}{(r^6 +\lambda \delta)^3})
 \label{eq:ljsoftcore}
 \end{equation}
-These mostly solve the problem, as there can now be no division by zero and the fractions remain finite in all circumstances. They are, however, computationally expensive and complicate free energy calculations using mBAR or TI\supercite{Li2020Aug}. It is important to note that \texttt{Transformato} for this reason does \textbf{not} use soft-core potentials.
+These mostly solve the problem, as there can now be no division by zero and the fractions remain finite in all circumstances. They are, however, computationally expensive and complicate free energy calculations using mBAR or TI\cite{Li2020Aug}. It is important to note that \texttt{Transformato} for this reason does \textbf{not} use soft-core potentials.
 
 
 \section{The common-core serial-atom-insertion framework {\texttt{Transformato}}}
@@ -242,7 +267,7 @@ To address these problems, the common-core serial-atom-insertion framework was c
 \subsection{Usage}
 Installing \texttt{Transformato} is fairly straightforward: it requires a working installation of \texttt{conda} and \texttt{python}. Using \texttt{git clone}, download the package from the repository\footnote{\url{https://github.com/JohannesKarwou/Transformato}} and run \texttt{python setup.py install}. This will install a conda environment called \texttt{fep} consisting of \texttt{Transformato} and all its dependencies. Activate the environment and you're done.
 
-To calculate free energies, retrieve a PDB containing your ligand-protein complex for both endpoints. For each, solvate once the complex including the ligand and once just the ligand using e.g. CHARMM-GUI's Solvation Builder\footnote{\url{https://www.charmm-gui.org/}}. Take the output folders, equilibrate them and name the 'complex' and 'waterbox', respectively. You will then need to create a config.yaml file containing the names of your structures and parameters you want your simulation to have - any restraints you wish to apply must also be defined here. The simplest case for specifying restraints is simply done by adding the keyword \code{restraints: auto} to the \emph{simulation} part of the configuration file. This restrains the entire ligand backbone via its center of mass to the center of mass of the protein backbone. Inside the code, this is referred to as \texttt{simple} mode. Another possibility is the generation of restraints on the extremities of the ligand using the \code{extremities=[int]} keyword. This algorithmically selects those carbon atoms furthest from the center of mass (and each other), and restrains these and their surroundings to the protein, thus cutting down on rotational freedom. The downside of this is that it requires some prior knowledge of the ligand's shape - not usually a problem, but potentially in large-scale applications. Of course, this also reduces sampling volume even further than the simple restraint. Lastly, it is also possible to manually define restraints in addition to - or instead of - the automatic ones, using the keyword \code{restraints: manual} and defining manual restraints below. This allows full use of the MDAnalysis\supercite{agrawal2011,oliver_beckstein-proc-scipy-2016} selection syntax, limited only by the common core on the ligand.
+To calculate free energies, retrieve a PDB containing your ligand-protein complex for both endpoints. For each, solvate once the complex including the ligand and once just the ligand using e.g. CHARMM-GUI's Solvation Builder\footnote{\url{https://www.charmm-gui.org/}}. Take the output folders, equilibrate them and name the 'complex' and 'waterbox', respectively. You will then need to create a config.yaml file containing the names of your structures and parameters you want your simulation to have - any restraints you wish to apply must also be defined here. The simplest case for specifying restraints is simply done by adding the keyword \code{restraints: auto} to the \emph{simulation} part of the configuration file. This restrains the entire ligand backbone via its center of mass to the center of mass of the protein backbone. Inside the code, this is referred to as \texttt{simple} mode. Another possibility is the generation of restraints on the extremities of the ligand using the \code{extremities=[int]} keyword. This algorithmically selects those carbon atoms furthest from the center of mass (and each other), and restrains these and their surroundings to the protein, thus cutting down on rotational freedom. The downside of this is that it requires some prior knowledge of the ligand's shape - not usually a problem, but potentially in large-scale applications. Of course, this also reduces sampling volume even further than the simple restraint. Lastly, it is also possible to manually define restraints in addition to - or instead of - the automatic ones, using the keyword \code{restraints: manual} and defining manual restraints below. This allows full use of the MDAnalysis\cite{agrawal2011,oliver_beckstein-proc-scipy-2016} selection syntax, limited only by the common core on the ligand.
 
 \begin{figure}\small
 
@@ -279,7 +304,7 @@ These processes were complicated by the fact that the script that generates the 
 
  As much code as possible was exiled into a separate module file called \code{restraints.py}, with only minimal changes to \code{state.py} and \code{mutate.py} being necessary. 
 
-Currently, restraints are only available as a proof-of-concept for openMM. OpenMMs \emph{CustomCentroidBondForce} was chosen as basis for all restraints. To facilitate analysis of Ligand and Protein structures, MDAnalysis\supercite{agrawal2011,oliver_beckstein-proc-scipy-2016} was used.
+Currently, restraints are only available as a proof-of-concept for openMM. OpenMMs \emph{CustomCentroidBondForce} was chosen as basis for all restraints. To facilitate analysis of Ligand and Protein structures, MDAnalysis\cite{agrawal2011,oliver_beckstein-proc-scipy-2016} was used.
 
 \subsection{Processing user input}
 To leverage the existing codebase as well as keeping with the established design principles of \texttt{Transformato}, additional user input was restricted to the configuration \texttt{.yaml} already required; to ensure both backward compatibility and prevent accidental use of restraints all commands to use restraints are purely optional. If a user is unaware of the possibility of restraints, they will not run into the danger of accidentally using them. Further, there is no additional workflow in the users' submit script - all of it is done during \code{utils.py::load\_config\_yaml()} automatically.
@@ -291,15 +316,15 @@ Due to the structure of the existing code, no changes to \code{utils.py} were ne
 
 \subsection{Applying the Force to the actual simulation}
 \section{RBFE calculations}
-All inputs were generated using CHARMM-GUI\supercite{Jo2008Aug}, and used the CHARMM36m forcefield\supercite{Huang2017Jan}. For easier handling and allowing larger timesteps, CHARMM-GUI's facility for hydrogen mass repartitioning\supercite{Gao2021Feb} was used unless noted. Equilibration was done using the openMM - Inputs provided by CHARMM-GUI\supercite{Brooks2009Jul,Lee2016Jan}. To modify the ligand, CHARMM-GUI's ligand designer\supercite{Guterres2021Nov} was used alongside the commercial program Maestro\supercite{maestro}. The simulations themselves were carried out using openMM 7.5\supercite{Eastman2017Jul}
+All inputs were generated using CHARMM-GUI\cite{Jo2008Aug}, and used the CHARMM36m forcefield\cite{Huang2017Jan}. For easier handling and allowing larger timesteps, CHARMM-GUI's facility for hydrogen mass repartitioning\cite{Gao2021Feb} was used unless noted. Equilibration was done using the openMM - Inputs provided by CHARMM-GUI\cite{Brooks2009Jul,Lee2016Jan}. To modify the ligand, CHARMM-GUI's ligand designer\cite{Guterres2021Nov} was used alongside the commercial program Maestro\cite{maestro}. The simulations themselves were carried out using openMM 7.5\cite{Eastman2017Jul}
 
 
 \subsection{2OJ9 - Tautomer A with modified BMI}
 \subsection{2OJ9 - Tautomer B with modified BMI}
 \subsection{Vim2: ZN148 relative to ZN223, ZN222 and ZN228}
-Vim2 is a Carbapenem-Hydrolyzing Metallo-$\beta$-Lactamase, responsible for a subtype of bacterial drug resistance.\supercite{Poirel2000Apr}. ZN148 and ZN223 are specific zinc ligands first presented by Samuelsen et al.\supercite{Samuelsen2020Jun}. These ligands are designed to inhibit Vim2 activity and suppress its drug-resistant activity, thus providing a treatment vector for strains containing it. 
+Vim2 is a Carbapenem-Hydrolyzing Metallo-$\beta$-Lactamase, responsible for a subtype of bacterial drug resistance.\cite{Poirel2000Apr}. ZN148 and ZN223 are specific zinc ligands first presented by Samuelsen et al.\cite{Samuelsen2020Jun}. These ligands are designed to inhibit Vim2 activity and suppress its drug-resistant activity, thus providing a treatment vector for strains containing it. 
 
-To prepare the structures for use in transformato, protonation states were determined by use of ProToss\supercite{Lippert2009Dec,Bietz2014Dec} and manual observation, after which ligand and protein were solvated using CHARMM-GUI's solvation builder, including patching of the C-Terminus. As certain binding modes require the presence of an OH$^-$ group nearby, but CHARMM-GUI's solvation builder is unable to process the system with it, a roundabout way was chosen where a separate .crd file for the OH group was created and patched in after solvation using \texttt{macha}\supercite{twotoneblue2022May}. As this also complicated HMR, Hydrogen Mass Repartitioning was accomplished using \texttt{parmed}\supercite{Shirts2016Sep}. Afterwards, use in \texttt{Transformato} continued as normal.
+To prepare the structures for use in transformato, protonation states were determined by use of ProToss\cite{Lippert2009Dec,Bietz2014Dec} and manual observation, after which ligand and protein were solvated using CHARMM-GUI's solvation builder, including patching of the C-Terminus. As certain binding modes require the presence of an OH$^-$ group nearby, but CHARMM-GUI's solvation builder is unable to process the system with it, a roundabout way was chosen where a separate .crd file for the OH group was created and patched in after solvation using \texttt{macha}\cite{twotoneblue2022May}. As this also complicated HMR, Hydrogen Mass Repartitioning was accomplished using \texttt{parmed}\cite{Shirts2016Sep}. Afterwards, use in \texttt{Transformato} continued as normal.
 
 
 
@@ -372,5 +397,6 @@ None & N/A & no & 8.77 & 1.85
 \listoffigures
 
 \listoftables
+
 \printbibliography[title={References}]%heading=subbibnumbered,
 \end{document}
