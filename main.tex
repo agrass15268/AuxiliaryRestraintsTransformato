@@ -9,7 +9,7 @@
 \usepackage{abstract}
 \usepackage[headsepline]{scrlayer-scrpage}
 \usepackage{listings}
-\usepackage[hidelinks,bookmarks,urlcolor=blue]{hyperref}
+\usepackage[hidelinks,bookmarks,urlcolor=uniblue]{hyperref}
 \usepackage{mathtools}
 %\usepackage{ftnright}
 \pagestyle{scrheadings}
@@ -19,11 +19,21 @@
 \usepackage{url}
 \usepackage{svg}
 \usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{doi}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,calc,fadings,backgrounds}
+\usepackage{float}
+
 
 \definecolor{Light}{gray}{.90}
 \sethlcolor{Light}
 
-
+\definecolor{uniblue}{RGB}{0,99,166}
+\definecolor{uniwine}{RGB}{246,168,0}
+\definecolor{uniwine}{RGB}{167,28,73}
+\definecolor{unilightgreen}{RGB}{148,193,84}
+\definecolor{unigrey}{RGB}{102,102,102}
 
 \newcommand{\code}[1]{\texttt{\hl{#1}}}
 
@@ -90,7 +100,7 @@ Source code and packaged versions of the \texttt{Transformato} package may be re
 \endgroup
 \renewcommand{\thefootnote}{\Roman{footnote}}
 \chapter{Introduction}
-Almost since the inception of computer-assisted molecular modeling, a significant focus has been on the interaction of pharmaceutically active biomolecules. Designing and testing lead compounds to catalyze or inhibit biochemical processes is a major focus of research and development efforts, and a comparatively easy-to-access parameter with nevertheless good predictive capabilities has long been the relative binding free energy difference. However, traditional molecular dynamics (MD) modeling efforts face the so-called van-der-Waals endpoint problem when trying to do either alchemical or physical energy simulations. Circumventing these problems requires the use of soft-core-potentials, which significantly increases computing costs and does not fully solve these problems. 
+Almost since the inception of computer-assisted molecular modeling, a significant focus has been on the interaction of pharmaceutically active biomolecules. Designing and testing lead compounds to catalyze or inhibit biochemical processes is a major focus of research and development efforts, and a comparatively easy-to-access parameter with nevertheless good predictive capabilities has long been the relative binding free energy difference. However, traditional molecular dynamics (MD) modeling efforts face the so-called van-der-Waals endpoint problem when trying to do either alchemical or physical free energy simulations (FES). Circumventing these problems requires the use of soft-core-potentials, which significantly increases computing costs. 
 
 \begin{figure}
     \begin{center}
@@ -103,19 +113,19 @@ Almost since the inception of computer-assisted molecular modeling, a significan
     \label{fig:fesvstrafo}
 \end{figure}
 
-Recently, the package \texttt{Transformato} was introduced by Karwounopoulos, Wieder, Braunsfeld, and Boresch\cite{Karwou2022Jun,braunsfeldImplementationTestingCHARMM,Wieder2022Jun}, implementing a novel approach bypassing these problems. Being a python package, \texttt{Transformato} is easy to install, use, and modify to adapt to system-specific challenges or support different MD engines. Instead of full alchemical transformations of one compound into the other, it instead relies on computing a \emph{common core} (CC) between the two physical endpoints. Summing up the energy differences between the CC and the endstates allows calculation of the free energy difference between the endstates themselves (see Fig. \ref{fig:fesvstrafo}).
+Recently, the package \texttt{Transformato} was introduced by Karwounopoulos, Wieder, Braunsfeld, and Boresch\cite{Karwou2022Jun,braunsfeldImplementationTestingCHARMM,Wieder2022Jun}, implementing a novel approach to bypass these problems. Being a python package, \texttt{Transformato} is easy to install, use, and modify to adapt to system-specific challenges or support different MD engines. Instead of full alchemical transformations of one compound into the other, it instead relies on computing a \emph{common core} (CC) between the two physical endpoints. Summing up the energy differences between the CC and the endstates allows calculation of the free energy difference between the endstates themselves (see Fig. \ref{fig:fesvstrafo}).
 
 
 
 With this method, atoms outside the common core are transformed into so-called \emph{dummy atoms}, a term for particles that, while still present in the simulated system, no longer have nonbonded interactions and are only kept in place by weak bonded interactions. If handled properly, these do not contribute to the calculated free energies\cite{fleckDummyAtomsAlchemical2021}.
 
-These dummy atoms are introduced along several intermediate states, alongside various levels of scaling of nonbonded interactions. These intermediate states are then analysed using the \emph{multistate Bennett Acceptance Ratio}\cite{Shirts2008Sep} (mBAR), an expanded version of Bennet's acceptance ratio\cite{Bennett1976Oct}, ideally giving a close approximation of $\Delta\Delta G$. However, mBAR requires topological overlap between the various intermediate states - a problematic proposition if the ligand is liable to abscond its binding site during the simulation timeframe. To prevent this, an additional module \code{restraints.py} was developed and integrated into transformato. It allows the user to either request automatic restraints or define their own. These restraints as implemented act upon the center of mass of the selected ligand atoms, restraining them to their original positions.
+These dummy atoms are introduced along several intermediate states, alongside various levels of scaling of nonbonded interactions. These intermediate states are then analysed using the \emph{multistate Bennett Acceptance Ratio}\cite{Shirts2008Sep} (mBAR), an expanded version of Bennet's acceptance ratio\cite{Bennett1976Oct}, ideally giving a close approximation of the sought relative free energy $\Delta\Delta G$. However, mBAR requires topological overlap between the various intermediate states - a problematic proposition if the ligand is liable to abscond its binding site during the simulation timeframe. To prevent this, an additional module \code{restraints.py} was developed and integrated into transformato. It allows the user to either request automatic restraints or define their own. These restraints as implemented act upon the center of mass of the selected ligand atoms, restraining them to their original positions.
 
 To suit a variety of sampling needs, both harmonic and flat-bottomed energy potentials may be used as energy functions for these restraints. This way, a ligand may be specifically allowed to sample the entire binding site without being constrained, yet never leave it. This allows for better sampling and longer runtimes even at increased temperatures, without fear of losing the ligand.
 \chapter{Theory}
 
 \section{Theoretical Background}
-Simulating the dynamics of (bio-)chemical processes (referred to as \emph{Molecular Dynamics} (MD)) in their entirety can be divided into two classes: calculations utilizing \emph{Quantum Mechanics} (QM), where interactions are calculated according to Schrödinger's Equation, and \emph{Molecular Mechanics} (MM), where calculations instead use as simplified mass-charge-force model to calculate potential energies. While there is no doubt that methods utilizing QM can deliver more accurate results (especially if using "pure" QM and not using semi-empirical methods), computational costs prohibit their use in large biological systems ("large" in this context referring to even just a single protein and its ligand). Thus, for free energy calculations of the sort \texttt{transformato} is designed to accomplish, QM methods are unsuitable - which leaves Molecular Mechanics.
+Simulating the dynamics of (bio-)chemical processes (referred to as \emph{Molecular Dynamics} (MD)) in their entirety can be divided into two classes: calculations utilizing \emph{Quantum Mechanics} (QM), where interactions are calculated according to Schrödinger's Equation, and \emph{Molecular Mechanics} (MM), where calculations instead use a simplified mass-charge-force model to calculate potential energies. While there is no doubt that methods utilizing QM can deliver more accurate results (especially if using "pure" QM and not using semi-empirical methods), computational costs prohibit their use in large biological systems ("large" in this context referring to even just a single protein and its ligand). Thus, for free energy calculations of the sort \texttt{transformato} is designed to accomplish, QM methods are unsuitable - which leaves Molecular Mechanics.
 
 Which is not to say that QM has no place in MD simulations. QM is routinely used to improve geometries and improve calculation precision, with QM/MM methods existing that allow MM and QM calculations to run in the same MD simulation, using QM for sites of interest (typically binding sites) and MM for everything else. Perhaps most importantly, the force fields used for MD simulations start out as QM calculations that are then fitted to experimental data. Still, for this thesis, only MD based on Molecular Mechanics was used.
 
@@ -143,47 +153,34 @@ Bonded forces are generally given explicitly for each atom type. They are:
     \item Bonds (across two atoms)
     \item Angles (the angle across three atoms)
     \item Dihedrals (the angle across four atoms)
-    \item Impropers (the angle of a fourth atom being out-of-plane with the other three)
+    \item Impropers (also called \emph{improper dihedrals}, the angle of a fourth atom being out-of-plane with the other three)
+    \item Urey-Bradley (sometimes grouped with the angle terms; describes noncovalent bonds over larger distances)
 \end{itemize}
 
 All of which are defined in \emph{parameter files}, which contain the force parameters for each of these.
 
 \begin{figure}
-\tiny
+\small
 \begin{verbatim}
 BONDS
 CG1N1  CG2R51  375.00     1.4220 ! DCG, yxu, RNA
-CG1N1  CG2R61  345.00     1.4350 ! 3CYP, 3-Cyanopyridine (PYRIDINE pyr-CN) (MP2 by kevo)
+CG1N1  CG2R61  345.00     1.4350 ! 3CYP, 3-uniblueopyridine (PYRIDINE pyr-CN)
 CG1N1  CG321   400.00     1.4700 ! CYU, from CG1N1 CG331, yxu, RNA
-CG1N1  CG331   400.00     1.4700 ! ACN, acetonitrile, kevo
-CG1N1  NG1T1  1053.00     1.1800 ! ACN, acetonitrile; 3CYP, 3-Cyanopyridine (PYRIDINE pyr-CN) (MP2 by kevo)
-CG1N1  SG311   328.79     1.7011 ! XCN, by ac_aa            
+        
 
 ANGLES
 CG2R51 CG1N1  NG1T1    40.00    180.00 ! DCG, yxu, RNA
-CG2R61 CG1N1  NG1T1    40.00    180.00 ! 3CYP, 3-Cyanopyridine (PYRIDINE pyr-CN), yin
-CG321  CG1N1  NG1T1    21.20    180.00 ! CYU, from CG331 CG1N1 NG1T1, yxu, RNA
-CG331  CG1N1  NG1T1    21.20    180.00 ! ACN, acetonitrile, kevo
-NG1T1  CG1N1  SG311    40.70    179.93 ! XCN, by ac_aa                
-CG1T1  CG1T1  CG331    19.00    180.00 ! 2BTY, 2-butyne, kevo
-CG1T2  CG1T1  CG2D1    11.00    180.00 ! BEYN, pchat
-CG1T2  CG1T1  CG321    11.00    180.00 ! BUTY , PNTY, HPTY, HXYN,OCTY , pchat
+CG2R61 CG1N1  NG1T1    40.00    180.00 ! 3CYP, 3-uniblueopyridine (PYRIDINE pyr-CN)
+
 
 DIHEDRALS
 NG1T1  CG1N1  CG2R61 CG2R61  0.0100 2    0.00 ! CNP2, by ac_aa
 NG1T1  CG1N1  SG311  CG321   0.0060 1    0.00 ! XCN, by ac_aa
-CG2R53 CG251O CG25C1 CG2R53     6.4000  2   180.00 ! OIRD, oxindol-3-ylidene rhodanine, kevo & xxwy
-CG2R53 CG251O CG25C1 CG2RC0     6.4000  2   180.00 ! OIRD, oxindol-3-ylidene rhodanine, kevo & xxwy
-NG2R53 CG251O CG25C1 CG2R53     3.4000  2   180.00 ! OIHY, 5-(oxindol-3-ylidene)hydantoin, complete ring system, xxwy
-NG2R53 CG251O CG25C1 CG2RC0     3.4000  2   180.00 ! OIHY, 5-(oxindol-3-ylidene)hydantoin, complete ring system, xxwy
-SG311  CG251O CG25C1 CG2R53     6.4000  2   180.00 ! OIRD, oxindol-3-ylidene rhodanine, kevo & xxwy
-SG311  CG251O CG25C1 CG2RC0     6.4000  2   180.00 ! OIRD, oxindol-3-ylidene rhodanine, kevo & xxwy
 
 IMPROPERS
 CG2D1  CG331  NG2D1  HGA4      25.00  0     0.00 ! SCH1, xxwy
 CG2D1  CG331  NG2P1  HGR52     18.00  0     0.00 ! SCH2, xxwy
-CG2D1O CG2DC1 CG2O1  NG2S1   28.3025 0    0.00 ! DYAP, by ac_aa              
-CG2D1O CG331  NG2D1  SG311   18.8025 0    0.00 ! FZN, by ac_aa
+
 \end{verbatim}
    \caption{Excerpt from a parameter file created by CGenFF with a few definitions for bonds, angles dihedrals and impropers each.}
     \label{fig:parmfile}
@@ -233,37 +230,117 @@ Following these steps results in positions for each atoms for every step you cal
 
 \subsection{Relative and absolute binding free energies}
 
-Calculating the free energies from these trajectories, however, is a somewhat more problematic undertaking. For our purposes, we need to differentiate two types of free energy:
+Calculating the free energies from these trajectories, however, is a somewhat more problematic undertaking. For our purposes, we need to differentiate two types of free energy differences:
 \begin{itemize}
     \item \emph{solvation} free energies, which describe the energy difference between solvated and unsolvated compounds;
     \item \emph{binding} free energies, which describe the energy difference between a ligand bound to a complex, and an unbound one
 \end{itemize}
-They are however calculated using similar principles - by exploiting thermodynamic cycles.
 
-\subsection{Soft-core potentials and the van-der-Waals endpoint problem}
-In a standard MD simulation, the Lennard - Jones interaction $U_{LJ}$ is given by formula \ref{eq:ljstandard}.
+\begin{figure}[H]
+   
+    
+    
+
+  \begin{center}
+
+    \tikz{%
+      \node[outer sep=1mm](L1A) at (0,0) {$\mathrm{(P\cdot{}L1})_{aq}$};
+      \node[outer sep=1mm](L2A) at (6,0) {$\mathrm{(P\cdot{}L2})_{aq}$};
+          \node[outer sep=1mm](L1G) at (0,3) {$\mathrm{{\color{gray}P}+(L1})_{aq}$};
+              \node[outer sep=1mm](L2G) at (6,3) {$\mathrm{{\color{gray}P}+(L2})_{aq}$};
+                  \draw[-{Stealth},uniwine,ultra thick](L1A) -- node[below,outer sep=3mm]{$\Delta A^{\mathit{L1\rightarrow L2}}_{\mathit{bound}}$} (L2A);
+                  \draw[-{Stealth},uniwine,ultra thick](L1G) -- node[above,outer sep=3mm]{$\Delta A^{\mathit{L1\rightarrow L2}}_{\mathit{free}}$} (L2G);
+                  \draw[-{Stealth},uniblue,ultra thick](L1G) -- node[right]{$\Delta A^{\mathit{L1}}_{\mathit{bind}}$} (L1A);
+                  \draw[-{Stealth},uniblue,ultra thick](L2G) -- node[right]{$\Delta A^{\mathit{L2}}_{\mathit{bind}}$} (L2A);
+                  }
+    
+    \caption{A classic thermodynamic cycle to calculate free binding energy differences $\Delta A_{binding}$ between ligands $L_1$ and $L_2$. The physical path is marked in blue; the alchemical one in wine red.} 
+    \label{fig:thermocycle_rbfe}
+  \end{center}
+\end{figure}
+
+Calculating them typically exploits thermodynamic cycles. In Fig. \ref{fig:thermocycle_rbfe} you can see a typical example of such a cycle to calculate relative \emph{binding} free energies: two different Ligands $L_1$ and $L_2$ are in aqueous solution with the same Protein $P$. The quantity of interest is the relative binding free energy $\Delta \Delta A_{bind}$, which can easily be calculated by using the nonphysical - \emph{alchemical} transformations marked in uniwine (Eq. \ref{eq:deltadeltaAbind}). While it would, theoretically, be possible to calculate $\Delta A^{L1}_{bind}$ directly, doing so would involve creating a simulation where the ligand moves far enough away from the protein to be considered non-interacting. This would require massive box sizes and a significant amount of simulation time, which together usually preclude this approach.
+
+\begin{equation}
+    \Delta \Delta A_{bind} = A^{L2}_{bind}-A^{L1}_{bind}=A^{L1\rightarrow L2}_{bound}-A^{L1\rightarrow L2}_{free}
+    \label{eq:deltadeltaAbind}
+\end{equation}
+
+
+For the alchemical transformations however, all that needs to be done is to replace one ligand binding to the protein with the other. Doing so directly, however, does not work (well). Calculating free energies requires \emph{phase space overlap}. \emph{Phase space} in this context refers to the total allowed set of positions and momenta of the system. Two completely different ligands will overlap barely, if at all - giving error bars bigger than the calculated energy difference. Thus, the amount of changes in the calculation needs to be reduced by introducing \emph{intermediary states}. Energy differences are then not calculated between the endstates, but rather as sum of energy differences between the endstates (Eq. \ref{eq:sumintstates}). This allows for much more overlap between the individual states, leading to much smaller margins of error in total.
+
+\begin{equation}
+    \Delta A_{1,K} = \sum^{K-1}_{i=1} \Delta A_{i,i+1}
+    \label{eq:sumintstates}
+\end{equation}
+
+
+
+\begin{figure}[h]
+    \centering
+     
+
+    \tikz{%
+      \node[outer sep=1mm](S1A) at (0,0) {$\mathrm{(S1)}_{aq}$};
+      \node[outer sep=1mm](S2A) at (6,0) {$\mathrm{(S2)}_{aq}$};
+          \node[outer sep=1mm](S1G) at (0,3) {$\mathrm{S1}$};
+              \node[outer sep=1mm](S2G) at (6,3) {$\mathrm{S2}$};
+                  {\draw[-{Stealth},uniwine,ultra thick](S1A) -- node[below,outer sep=3mm]{$\Delta A^{\mathit{S1\rightarrow S2}}_{\mathit{aq.}}$} (S2A);}
+                  {\draw[-{Stealth},uniwine,ultra thick](S1G) -- node[above,outer sep=3mm]{$\Delta A^{\mathit{S1\rightarrow S2}}_{\mathit{gasp}}$} (S2G);}
+                  \draw[-{Stealth},uniblue,ultra thick](S1G) -- node[right]{$\Delta A^{\mathit{S1}}_{\mathit{solv}}$} (S1A);
+                  \draw[-{Stealth},uniblue,ultra thick](S2G) -- node[right]{$\Delta A^{\mathit{S2}}_{\mathit{solv}}$} (S2A);
+                  }
+
+
+    \caption{A classic thermodynamic cycle to calculate free solvation energy differences $\Delta\Delta A_{solvation}$ between two substances $S_1$ and $S_2$ in gaseous phase and aqueous solution, with physical paths in blue and alchemical paths in wine red.}
+    \label{fig:thermocycle_rsfe}
+\end{figure}
+
+
+The same approach also enables calculating relative \emph{solvation} free energies. Here, the "physical" path leads from an unsolvated compound to a solvated one, whereas the alchemical pathways again lead through simply changing the compound (Fig. \ref{fig:thermocycle_rsfe}).
+
+\subsection{Generation of intermediate states and dummy atoms}
+
+The simplest method of generating intermediate states as used in Eq. \ref{eq:sumintstates} is to linearly "mix" the affected potentials $U_\lambda$ from $U_0 \rightarrow U_1$, with $\lambda$ being known as the \emph{coupling factor}. Notably, $\lambda$ only affects a subset of potentials (usually nonbonded interactions, meaning charges and Lennard-Jones-interactions, will be most heavily affected), while most of the potential remains unaffected. The total potential for a given intermediate state $i$ as required by Eq. \ref{eq:sumintstates} is thus as given by Eq. \ref{eq:totalpotential}, usually with $U_0; U_1 << U_{unaffected}$.
+\begin{equation}
+U^{total}_i   = (1-\lambda)U_0 + \lambda U_1  + U_{unaffected}
+\label{eq:totalpotential}
+\end{equation}
+This kind of linear scaling, however, creates a number of problems; most pressingly a distinct lack of phase space overlap required for analysis, as well as the van-der-Waals endpoint problem (see section \ref{sec:vdwproblem}). \texttt{Transformato} does \emph{not} use these kinds of "lambda-scaling" methods, instead opting for an approach called "serial atom insertion" (see section \ref{sec:tf_principles}).
+
+An even more egregious problem arises when the number of atoms changes between endstates: Typical implementations of statistical thermodynamics as required for MD do not account for changing the number of particles in the system. To sidestep this problem, \emph{dummy atoms} are introduced by turning off all interactions but their bonded terms - either just for surplus atoms (known as the \emph{single topology approach}) or by having both topologies fully present in all states, with the currently unused one handled as dummy atoms (known as the \emph{dual topology approach}). It has been shown that, used correctly and provided they remain well-defined in position and orientation, their influence on calculated energies is close to zero as their terms in $\Delta \Delta A$  cancel each other out\cite{fleckDummyAtomsAlchemical2021}. This allows the system to retain a constant number of particles.
+\subsection{Soft-core potentials and the van-der-Waals endpoint problem} \label{sec:vdwproblem}
+In a standard MD simulation, the Lennard - Jones potential $U_{LJ}$ is given by formula \ref{eq:ljstandard}.
 \begin{equation}
 U_{LJ}(r,\lambda)=(1-\lambda)(\frac{A}{r^{12}} - \frac{B}{r^6})
 \label{eq:ljstandard}
 \end{equation}
-This usually works rather well -  the shape of the potential ensures that no two LJ particles inhabit the same spot. However, free energy calculations for the reasons discussed above, usually require the presence of \textit{dummy atoms} - which obviously do not have Lennard - Jones interactions. It's rather obvious, where problems may now occur -  as there are no LJ interactions, atoms may move freely into each other. This may not seem like such a significant problem - but forces still need to be calculated. Should particles manage to inhabit the exact same position, this would result in a division by zero - problematic, but most modern MD software can handle this. 
+This usually works rather well -  the shape of the potential ensures that no two LJ particles inhabit the same spot. However, free energy calculations, for the reasons discussed above, usually require the presence of \textit{dummy atoms} - which obviously do not have Lennard - Jones interactions. It's here where problems may now occur -  as there are no LJ interactions, atoms may move freely into each other. This may not seem like such a significant problem - but forces still need to be calculated. Should particles manage to inhabit the exact same position, this would result in a division by zero - problematic, but most modern MD software can handle this. 
 
-Both more problematic and more common, however, is the case that two particles get very close to each other. In this case, the derivation $\langle \frac{\delta U}{\delta\lambda} \rangle$ may diverge, causing the entire simulation to become unstable. This is known as the \textit{van-der-Waals endpoint problem} (or \textit{-catastrophe}, for the more dramatically inclined).
 
-To avoid this problem, soft-core potentials were introduced as shown in Equation \ref{eq:ljsoftcore}\cite{Beutler1994Jun}:
+Both more problematic and more common, however, is the case that two particles get very close to each other. This is especially common in simulations with linear coupling between $\lambda$ and the LJ potential, as for low values of $\lambda$ the interaction range may decrease to such an extent that a particle may skip the entire "well" of the potential, and directly encounter its "wall", leading to extremely high forces being applied. In this case, the derivation $\langle \frac{\delta U}{\delta\lambda} \rangle$ may diverge, causing the entire simulation to become unstable. This is known as the \textit{van-der-Waals endpoint problem} (or \textit{-catastrophe}, for the more dramatically inclined).
+
+\begin{figure}
+    \centering
+    \includegraphics[height=8cm]{LJandsoftcore.png}
+    \caption{Comparison between behaviour of standard Lennard-Jones and soft-core potentials for various states of $\lambda$}
+    \label{fig:ljandsoftcore}
+\end{figure}
+
+To avoid this problem, soft-core potentials dependent on the coupling factor $\lambda$ were introduced as shown in Equation \ref{eq:ljsoftcore}\cite{Beutler1994Jun}:
 \begin{equation}
 U_{LJ}^{SC}(r,\lambda)=(1-\lambda)(\frac{A}{(r^2 +\lambda \delta)^6 }-\frac{B}{(r^6 +\lambda \delta)^3})
 \label{eq:ljsoftcore}
 \end{equation}
-These mostly solve the problem, as there can now be no division by zero and the fractions remain finite in all circumstances. They are, however, computationally expensive and complicate free energy calculations using mBAR or TI\cite{Li2020Aug}. It is important to note that \texttt{Transformato} for this reason does \textbf{not} use soft-core potentials.
+These mostly solve the problem, as there can now be no division by zero and the fractions remain finite in all circumstances. They are, however, computationally expensive  - especially for MD engines lacking native support for them.\cite{Li2020Aug}. It is important to note that \texttt{Transformato} for this reason does \textbf{not} use soft-core potentials, but rather the "serial-atom-insertion" approach (see section \ref{sec:tf_principles}).
 
 
 \section{The common-core serial-atom-insertion framework {\texttt{Transformato}}}
 To address these problems, the common-core serial-atom-insertion framework was conceptualized and implemented in \texttt{Transformato}. \texttt{Transformato} is engine-agnostic - its outputs being designed to be computable with any of the widely-used Molecular Dynamics engines (openMM, CHARMM, AMBER, GROMACS, etc.), though pre-provided simulation scripts are currently only available for CHARMM and openMM.
 
 
-\subsection{Theoretical Principles}
-\subsection{Theoretical consideration for Restraints in \texttt{Transformato}}
+\subsection{Theoretical Principles} \label{sec:tf_principles}
+\subsection{Theoretical considerations for Restraints in \texttt{Transformato}}
 \subsection{Usage}
 Installing \texttt{Transformato} is fairly straightforward: it requires a working installation of \texttt{conda} and \texttt{python}. Using \texttt{git clone}, download the package from the repository\footnote{\url{https://github.com/JohannesKarwou/Transformato}} and run \texttt{python setup.py install}. This will install a conda environment called \texttt{fep} consisting of \texttt{Transformato} and all its dependencies. Activate the environment and you're done.
 
@@ -329,11 +406,19 @@ To prepare the structures for use in transformato, protonation states were deter
 
 
 \chapter{Results}
-
+To test both the successfull application of the restraints, and their impact on calculated RBFE, a number of simulations were conducted using test systems 2OJ9 and VIM2. \textbf{It should be noted that the energies calculated here do not represent actual free energies}, as all simulations were conducted from one physical endstate to the common core; while the systems were chosen in a way that the common core topology is identical to the second physical endstate, this is not an acceptable substitute for caluclating the energy difference for both mutation routes. However, the goal of these simulations was simply to serve as instructive checks whether the main goals of the work (introduction of restraints) had been achieved and whether those had significant impact on calculated $ \Delta \Delta G$. All results are averaged from runs with three replicates.
 \section{Application of restraints to classical MD simulations}
 
+To verify the validity of the general approach, a variety of restraints were introduced to 2OJ9 systems outside of \texttt{Transformato}, and simulated with standard MD for ten nanoseconds. Afterwards, trajectories were analyzed with regard to the distance between the supposed binding sites to the protein, as well as root mean square deviation and potential energy.
 \section{Application of restraints to \texttt{Transformato} RBFE calculations}
+\newpage
 \subsection{2OJ9: Tautomer A, BMI 24 to 25}
+\begin{figure}
+    \centering
+    \includegraphics[height=8cm]{2oj9_struc_taapdb.png}
+    \caption{2OJ9 Tautomer A, with functional groupings shaded. uniwine: common core. Green: terminal X. Pink: dummy region. Of note: the two likely bonds to the protein.}
+    \label{fig:2oj9_struc_taapdb}
+\end{figure}
 \begin{table}\small
 \begin{center}
     \begin{tabular}{l|r|l|r|r}
