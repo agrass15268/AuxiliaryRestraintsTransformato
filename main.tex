@@ -404,7 +404,7 @@ Lastly, \code{analysis.py} does not get called during simulation, but rather exi
 
 A further number of small, miscellaneous modules (\code{systems.py}, \code{charmm\_factory.py}...) exist, providing helper functions to the above-mentioned modules or for testing.
 
-\section{Implementation of restraints into \texttt{Transformato}}
+\section{Implementation of restraints into \texttt{Transformato}}\label{sec:implementation_restraints}
 
 The process of applying restraints was divided into three parts:
 
@@ -511,7 +511,7 @@ For 2OJ9 derivatives, relative distances were measured according to the likely i
 \begin{figure}[h]\label{fig:CCnotEq}
     \centering
     \includegraphics[width=1\textwidth]{CCnotEq.png}
-    \caption[Schematic Display of mutation occurring for 2OJ9 TABLIT 24 to the common core with TABLIT 25.]{Schematic Display of mutation occurring for 2OJ9 TABLIT 24 to the common core with TABLIT 25. Yellow: Common Core. Green: Objects that will be mutated. Grey: The dummy region resulting from the superfluous hydrogen. As apparent, the common core (2) resulting from mutation of (1) is not exactly equivalent to the unmated structure (3)}
+    \caption[Schematic display of mutation occurring for 2OJ9 TABLIT 24 to the common core with TABLIT 25.]{Schematic display of mutation occurring for 2OJ9 TABLIT 24 to the common core with TABLIT 25. Yellow: Common Core. Green: Objects that will be mutated. Grey: The dummy region resulting from the superfluous hydrogen. As apparent, the common core (2) resulting from mutation of (1) is not exactly equivalent to the unmated structure (3)}
     
 \end{figure}
 Here, the focus lay primarily on showing whether the introduction had a significant effect on calculated RBFE. No RSFE simulations were conducted. To facilitate this, 2OJ9 and VIM-2 systems were restrained using a variety of parameters and compared to equal-conditioned unrestrained simulations. Three replicates were used for each set of parameters. As the simulations were resource-intensive, simulations were only conducted one-sided, meaning that only one endstate was mutated into the common core, with the other endstate being chosen in such a way that it was structurally identical to the common core. However, due to differences arising from charge compensation in the terminal junction (see Fig. \ref{fig:CCnotEq}) this means that despite the identical structure this does not supplant a full two-sided simulation. As such, all results are qualitative rather than quantitative.
@@ -520,17 +520,146 @@ Here, the focus lay primarily on showing whether the introduction had a signific
 
 \chapter{Results}
 
-\section{Binding site dynamics simulations}
+\section{Binding site dynamics simulations}\label{sec:results_bsdynamics}
+A total of 181 simulations were conducted, of which only a small subset is presented here (full data available via the repository). To visualise the relative distances of the virtual bonds as defined in section \ref{sec:simulations}, distance data was aggregated across time and intermediate states, and are displayed as arithmetic mean plus confidence interval. \emph{Y - axes not equally scaled, all using a harmonic potential.}
+\begin{figure}[h]\label{fig:reldist_taapdb}
+    
+    
+
+\begin{minipage}{0.5\textwidth}
+\includegraphics[width=1\textwidth]{plots/reldistplot_taapdb2425_k0ex3.png}
+\end{minipage}
+\begin{minipage}{0.5\textwidth}
+\includegraphics[width=1\textwidth]{plots/reldistplot_taapdb2425_k400ex3.png}
+\end{minipage}
 
 
-\section{\texttt{Transformato} RBFE calculations}
+\caption[Relative distance plot: TAAPDB 24 to 25, k=0 and k=400]{Relative distance plot for TAAPDB  24 to 25, k=0 (left) and k=400 (right), three extremities restraint.}
+\end{figure}
 
+\begin{figure}[h]
+    
+    \label{fig:reldist_tablit}
+
+\begin{minipage}{0.5\textwidth}
+\includegraphics[width=1\textwidth]{plots/reldistplot_tablit2425_k3ex3.png}
+\end{minipage}
+\begin{minipage}{0.5\textwidth}
+\includegraphics[width=1\textwidth]{plots/reldistplot_tablit2425_k100ex3.png}
+\end{minipage}
+
+
+\caption[Relative distance plot: TABLIT 24 to 25, k=3 and k=100]{Relative distance plot for TABLIT  24 to 25, k=3 (left) and k=100 (right), three extremities restraint.}
+\end{figure}
+
+\begin{figure}[h]
+    
+    
+
+\begin{minipage}{0.5\textwidth}
+\includegraphics[width=1\textwidth]{plots/reldistplot_zn222_k3simple.png}
+\end{minipage}
+\begin{minipage}{0.5\textwidth}
+\includegraphics[width=1\textwidth]{plots/reldistplot_zn222_k100simple.png}
+\end{minipage}
+
+
+\caption[Relative distance plot: ZN222 to ZN148, k=3 and k=100 (simple)]{Relative distance plot for ZN222 to ZN148, k=3 (left) and k=100 (right), simple restraint.}\label{fig:reldist_zn222simple}
+\end{figure}
+
+\begin{figure}[h]
+    
+    
+
+\begin{minipage}{0.5\textwidth}
+\includegraphics[width=1\textwidth]{plots/reldistplot_zn222_k0ex3.png}
+\end{minipage}
+\begin{minipage}{0.5\textwidth}
+\includegraphics[width=1\textwidth]{plots/reldistplot_zn222_k100ex3.png}
+\end{minipage}
+
+
+\caption[Relative distance plot: ZN222 to ZN148, k=3 and k=100 (ex3)]{Relative distance plot for ZN222 to ZN148, k=0 (left) and k=100 (right), three extremities restraint.}
+\label{fig:reldist_zn222ex3ref}
+\end{figure}
+\section{\texttt{Transformato} RBFE calculations}\label{sec:results_tf_rbfe}
+RBFE calculations were conducted as outlined in section \ref{sec:simulations}, with hydrogen mass repartitioning and a timestep of 0.004 ns, varying parameters such as force constant and restraint type. Due to time and computational constraints, not all variations for all systems were explored. Boxes display first to third quartile of data, outliers are shown as dots. A minimum of three replicates were used for each data point. Equal - colored boxes represent equivalent values of the force constant $k$. Y-axis scale is fixed across comparative results. Datasets may include both scaled and nonscaled results; an unpaired Student's T-Test \cite{luroth_vergleichung_1876} was applied to test for significant differences between the means of the samples. As it failed to find such differences at a confidence level of 95\%, scaled and unscaled results were combined for the purposes of these plots, effectively giving $n=6$ for parameter sets where scaled and nonscaled simulations were conducted.
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{plots/boxplot_rbfe_taapdb_1.25ns.png}
+    \caption[RBFE results for TAAPDB 24 to 25]{RBFE results for TAAPDB 24 to TAAPDB 25 at a runtime of 1.25 ns for both simple and three-extremities restraints. $k=0$ represents the unrestrained comparison system.}
+    
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{plots/boxplot_rbfe_tablit24to25_1.25ns.png}
+    \caption[RBFE results for TABLIT 24 to 25 (1.25ns)]{RBFE results for TABLIT 24 to TABLIT 25 at a runtime of 1.25 ns for both simple and three-extremities restraints. $k=0$ represents the unrestrained comparison system.}
+    
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{plots/boxplot_rbfe_tablit24to25_5ns.png}
+    \caption[RBFE results for TABLIT 24 to 25 (5ns)]{RBFE results for TABLIT 24 to TABLIT 25 at a runtime of 5 ns for both simple and three-extremities restraints. $k=0$ represents the unrestrained comparison system.}
+    
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{plots/boxplot_rbfe_tablit24to26_1.25ns.png}
+    \caption[RBFE results for TABLIT 24 to 26 (1.25ns)]{RBFE results for TABLIT 24 to TABLIT 26 at a runtime of 1.25 ns for both simple and three-extremities restraints. $k=0$ represents the unrestrained comparison system.}
+    
+\end{figure}
+
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{plots/boxplot_rbfe_zn222_5ns.png}
+    \caption[RBFE results for ZN148 to ZN222]{RBFE results for ZN148 to ZN222 at a runtime of 5 ns for both simple and three-extremities restraints. $k=0$ represents the unrestrained comparison system.}
+    
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{plots/boxplot_rbfe_zn223a_5ns.png}
+    \caption[RBFE results for ZN148 to ZN223a]{RBFE results for ZN148 to ZN223a at a runtime of 5 ns for both simple and three-extremities restraints. $k=0$ represents the unrestrained comparison system.}
+    
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{plots/boxplot_rbfe_zn222_5ns.png}
+    \caption[RBFE results for ZN148 to ZN223b]{RBFE results for ZN148 to ZN223b at a runtime of 5 ns for both simple and three-extremities restraints. $k=0$ represents the unrestrained comparison system.}
+    
+\end{figure}
 \newpage
 
 \chapter{Discussion}
 
-\section{Comparison to experimental results}
-\section{Limitations of the current approach and future possibilities }
+\section{Comparison of restrained to unrestrained results}
+\paragraph{Binding site dynamics} (Section \ref{sec:results_bsdynamics}) Here, the first obvious result is the fact that restraints themselves work; significant deviations can be observed between the unrestrained and heavily restrained systems. Perhaps most obvious in Fig. \ref{fig:reldist_zn222ex3ref}, a VIM-2 derived system where the unrestrained system moved away an average of 9 angstrom during the simulation, whereas the restrained system only moved away 3 angstrom. Similar, though less drastic results can be observed in the other data presented. As such, it can be concluded that at the basic technical level, the restraints function as designed. All of the data presented here is achieved through the use of harmonic potentials; while flat-bottomed potentials were implemented \ref{sec:implementation_restraints}, significant modifications between the originally tested and now-implemented version along with time constraints preclude their inlcusion in the presented dataset. However, the results of the limited number of simulations conducted are aligned with expectations.
+
+When discussing individual systems, it can be observed that VIM-2-based systems seem most likely to abscond their binding site, covering significant distances even within the simulations. A similar, but much less distinct behaviour can be observed for TAAPDB, with TABLIT being the most stable system in comparison.
+
+
+\paragraph{Transformato RBFE calculations} (Section \ref{sec:results_tf_rbfe}) When discussing the results of the free energy calculations, TAAPDB is somewhat of an outlier. The most heavily restrained system with $k=400$ is the only system to show significant deviation to the other restraint systems along with the unrestrained systems, being the only group in the dataset to fail Student's t-test when compared to the unrestrained system\footnote{After removal of the outlier aligned with the unrestrained set}. This would indicate that at a certain point, restraints do impact RBFE calculations. However, it should be noted that this behaviour is present in both scaled and nonscaled simulations, that a very high $k$ of 400 is required, and that it is the only set to show such deviation. Notably, TABLIT does not significantly differ from the unrestrained set even at $k=10000$. It should also be noted that it is only an outlier in the context of the very limited spread of the data presented here, with a mean derivation of 0.19 kcal to the unrestrained set. Given typical uncertainties of 1-2 kcal with RBFE calculations, this does not seem a significant factor.
+
+Overall however, no impact of restraints on the calculated free energies can be observed. Within the limitations discussed in sections \ref{sec:tf_principles} and \ref{sec:simulations}, this would seem to validate the theory that restraints do not have significant impact on RBFE calculations. This, on the other hand also means that there seem to be no significant \emph{benefits} to using restraints; however this may be a factor of the very limited simulation times (1.25 or 5 ns). Restraints may also find utility in non-standard calculations, such as those approximating a pull-mechanism.
+
+\section{Limitations of the current approach and future possibilities}
+While the results thus far look promising, some inherent technical problems do present themselves that may limit applicability in some cases. Firstly, the strict delineation between the common core (to which the restraints are applied) and everything else (where they are not) may present a problem in cases where a significant portion of the ligand is mutated. This problem also arises when connecting parts are mutated if the outlying parts are considered separate by \texttt{Transformato}, though in this case it may be circumvented by manually modifying the common core. In a similar vein, there currently exist no mechanism to accommodate changes in the protein.
+\paragraph{Automation improvements} With \texttt{Transformato}'s general push towards accessibility and quick setup even for large batches, the current process to define even automatic restraints is unsatisfactory. In particular, the productive use of extremity restraints requires prior manual inspection of the ligand in question, and parameter setup at this stage is mostly guesswork. While the default values should be sensible for most use cases, further automation with consideration of molecule and binding site geometry along with charge interactions should make it possible to generate good data without human intervention in the loop, significantly increasing its usability for lead generation.
+\paragraph{Quality-of-life improvements} Currently, the \code{restraints.py} API does not expose much of the underlying framework, complicating efforts to expand or modify the provided functions. In particular, not all parameters used for the generation of restraints are readily accessible, including the algebraic expression used to calculate restraint forces. Modifying these parameters currently requires modifications of the \code{restraints.py} itself, necessitating reinstallation. This would complicate multi-platform deployments especially on clusters, troubleshooting etc. Ideally, an API would be provided to expose these parameters directly through the \code{submit.ipynb}. This, however, would require extensive expansion of the I/O capabilities between the submit and simulation stages, as the current YAML framework seems ill-suited for these kinds of modifications.
+\paragraph{Package-independent cluster computation} As of now, \code{restraints.py} is the only \texttt{Transformato} module that requires it be installed on the cluster serving the simulation to function. This also includes some of its dependencies, notably MDAnalysis. This complicates the workflow compared to standard \texttt{Transformato} usage, and may preclude deployment in non-permissive environments, or at the very least introduces an additional layer of complexity with involvement of IT staff. Given the current limitations applied to the restraint, in particular the fact it is only applied to the immutable common core, it should be possible to frontload the structure analysis underpinning the creation of the restraint, having it be handled at the \code{submit.ipynb} stage instead of the \code{openmm\_run.py} stage. Assuming a satisfactory mechanism can be implemented to keep the openMM-generated atom idx constant, there would be no need for MDAnalysis or the restraints module being loaded during simulation.
+
+\paragraph{CHARMM integration} Currently, restraints are an experimental feature only available when using openMM. However, as otherwise the complete feature set of \texttt{Transformato} is available under CHARMM, it could be considered a waste to not have restraints implemented as well. This would be non-trivial, as CHARMM does not have the same type of centroid prototype force openMM posesses which is exploited for these restraints. Given language limitations, it would likely also require creation of dynamic simulation scripts during the submit stage instead of the static script used for openMM, thus creating a significant opportunity for critical bugs to arise.
+
+\section{Conclusion}
+A method to introduce restraints into \texttt{Transformato} was successfully implemented and performed adequately in testing. In the context of unstable systems, restraints accomplish their goal of retaining ligand-protein closeness without significant impact on calculated RBFE values. Conversely, no significant benefit from using restraints has been observed. As testing was done dissimilar to production conditions and within very limited timeframes, further research is required to draw definite conclusions.
 \chapter{Annex}
 \section{Definitions}
 As far as possible, equations in this thesis are notated and styled as in the Alchemistry Wiki maintained by Shirts and Chodera \cite{shirts_alchemistrywiki_nodate}. The symbols and notations used resolve as follows:
