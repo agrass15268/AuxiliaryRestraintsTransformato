@@ -30,6 +30,7 @@ uv_wine="#A71C49"
 uv_orangered="#DD4814"
 uv_lightgreen="#94C154"
 uv_mintgreen="#11897A"
+uvcolors=c(uv_blue,uv_wine,uv_lightgreen)
 
 ## data functions
 calculate_kjoule_kcal<-function(dataframe){
@@ -89,17 +90,19 @@ quickplot_rd <- function(plotdata_or,type="simple"){
   }
   plot<-ggplot(plotdata,aes(x=time))+
     xlab("Simulation time [ps]")+
-    ylab("Relative Distance [臸")+
+    ylab("Relative Distance [脜]")+
     #geom_smooth(size=1,aes(y=intst1.bond_1))+
     theme_classic()+
     theme(text=element_text(size=30))+
-    geom_smooth(data=dfbond1,aes(x=time,y=reldist),span=0.3,color=uv_blue,size=1.5)
+    theme(legend.position="none")+
+    geom_smooth(data=dfbond1,aes(x=time,y=reldist,color=uv_blue),span=0.3,size=1.5)+
+    scale_color_identity(guide="legend")
     #geom_point(data=dfbond1,aes(x=time,y=reldist))
   
   if (type!="simple"){
     plot<-plot+
-      geom_smooth(data=dfbond2,aes(x=time,y=reldist),span=0.3,color=uv_wine,size=1.5)+
-      geom_smooth(data=dfbond3,aes(x=time,y=reldist),span=0.3,color=uv_lightgreen,size=1.5)
+      geom_smooth(data=dfbond2,aes(x=time,y=reldist,color=uv_wine),span=0.3,size=1.5)+
+      geom_smooth(data=dfbond3,aes(x=time,y=reldist,color=uv_lightgreen),span=0.3,size=1.5)
   }
     returnValue(plot)
 }
@@ -107,12 +110,13 @@ quickplot_rd <- function(plotdata_or,type="simple"){
 quickplot_bp<-function(plotdata){
   
   plot=ggplot(plotdata,aes(x=kvalue,y=kcalvalue))+
-    geom_boxplot(aes(fill=kvalue))+
+    geom_boxplot(aes(fill=kvalue),outlier.size=3)+
     stat_boxplot(geom="errorbar",width=0.15)+
     facet_grid(rows=vars(restraint))+
     xlab("Value of force constant k in energy expression")+
     ylab("RBFE [kcal]")+
     theme_classic()+
+    
     theme(legend.position="none",text=element_text(size=30))
   
   
@@ -128,28 +132,29 @@ LJ_potential<-function(xvalue,lambda){
 }
 
 softcore_potential<-function(xvalue,lambda){
-  delta=1
+  delta=2
   y=(1-lambda)*((1/((xvalue^2+lambda*delta)^6))-(1/((xvalue^6+lambda*delta)^3)))
 }
 
 xvals=seq(-0.5,5,0.02)
 yvals=LJ_potential(xvals,0.5)
 yvalssmalllambda=LJ_potential(xvals,0.9)
-yvalssoftcore=softcore_potential(xvals,0.7)
-yvalssoftcore2=softcore_potential(xvals,0.75)
+yvalssoftcore=softcore_potential(xvals,0.4)
+yvalssoftcore2=softcore_potential(xvals,0.2)
 ljvals=data.frame(xvals,yvals,yvalssoftcore)
 
-ljplot=ggplot(ljvals)+geom_line(aes(xvals,yvals,color="Lennard-Jones-potential with 位=0.5"))+
-  geom_line(aes(xvals,yvalssoftcore,color="Soft-core-potential with 位=0.70"))+
-  geom_line(aes(xvals,yvalssoftcore2,color="Soft-core-potential with 位=0.75"))+
-  coord_cartesian(xlim=c(0,2),ylim=c(-0.5,0.5))+xlab("Distance r")+ylab("Potential Energy")+
-  geom_line(aes(xvals,yvalssmalllambda,color="Lennard-Jones-potential with 位=0.9"))+
+ljplot=ggplot(ljvals)+geom_line(aes(xvals,yvals,color="Lennard-Jones-potential with ??=0.5"))+
+  geom_line(aes(xvals,yvalssoftcore,color="Soft-core-potential with =0.4"))+
+  geom_line(aes(xvals,yvalssoftcore2,color="Soft-core-potential with =0.2"))+
+  coord_cartesian(xlim=c(0,2),ylim=c(-1,1))+xlab("Distance r")+ylab("Potential Energy")+
+  geom_line(aes(xvals,yvalssmalllambda,color="Lennard-Jones-potential with =0.9"))+
   theme_light() + labs(color="Type of Potential")+
-  scale_color_manual(name="Potential:",values=c("Soft-core-potential with 位=0.75"=uv_orangered,
-                                                "Soft-core-potential with 位=0.70"=uv_blue,
-                                                "Lennard-Jones-potential with 位=0.5"="black",
-                                                "Lennard-Jones-potential with 位=0.9"=uv_wine))
+  scale_color_manual(name="Potential:",values=c("Soft-core-potential with =0.75"=uv_orangered,
+                                                "Soft-core-potential with =0.70"=uv_blue,
+                                                "Lennard-Jones-potential with =0.5"="black",
+                                                "Lennard-Jones-potential with =0.9"=uv_wine))
 
+quicksave("LJplot.png",ljplot)
 ## data read-in: RBFE
 
 ma_taapdb=read.csv("../ma_taapdb.csv")
@@ -184,7 +189,7 @@ rd_zn222_k100ex3=read.csv("../relative_distances/zn222tozn148/5ns-k100ex3-1.csv"
 
 ## create plots: bindings site relative distances
 
-bsplot1=ggplot(bs_taapdb)+theme_classic()+theme(text=element_text(size=30))+geom_smooth(aes(frames,d_bond1),color=uv_blue)+geom_smooth(aes(frames,d_bond2),color=uv_wine)+geom_smooth(aes(frames,d_bond3),color=uv_lightgreen)+ylab("Absolute distance [臸")+xlab("Simulation Time [ps]")
+bsplot1=ggplot(bs_taapdb)+theme_classic()+theme(text=element_text(size=30))+geom_smooth(aes(frames,d_bond1),color=uv_blue)+geom_smooth(aes(frames,d_bond2),color=uv_wine)+geom_smooth(aes(frames,d_bond3),color=uv_lightgreen)+ylab("Absolute distance [?]")+xlab("Simulation Time [ps]")
 
 bsplot2=ggplot(bs_taapdbn)+theme_classic()+theme(text=element_text(size=30),axis.ticks.y=element_blank(),axis.text.y=element_blank())+geom_smooth(aes(frames,d_1),color=uv_blue)+geom_smooth(aes(frames,d_2),color=uv_wine)+geom_smooth(aes(frames,d_3),color=uv_lightgreen)+rremove("ylab")
 
@@ -207,13 +212,16 @@ plot_rd2<-plot_rd2+rremove("ylab")+
   
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
-        axis.title.y = element_blank() )
+        axis.title.y = element_blank(),
+        
+        )
+  #scale_color_manual(name="Restraints",values=c("RV01","RV02","RV03"))
 
 combiplot1=plot_rd1+ ylim(0,3)+plot_rd2+theme(plot.margin=unit(c(0,1,0,0), 'cm'))
 ggsave("rdcombi_zn222_k3_k100_simple.png",combiplot1,device=png,width=PWIDTH,height=PHEIGHT,dpi=PDPI,limitsize=FALSE,type="cairo-png")
 
 pdatard3=form_RelativeDistance_data(rd_zn222_k0ex3)
-plot_rd3<-quickplot_rd(pdatard3,"ex3")+theme(plot.margin=margin(0,1,0,0, 'cm'))
+plot_rd3<-quickplot_rd(pdatard3,"ex3")+theme(plot.margin=margin(0,1,0,0, 'cm'))+theme(legend.position="none")
 
 
 
@@ -223,7 +231,9 @@ quicksave("reldistplot_zn222_k0ex3.png",plot_rd3)
 
 
 pdatard5=form_RelativeDistance_data(rd_zn222_k100ex3)
-plot_rd5<-quickplot_rd(pdatard5,"ex3")
+plot_rd5<-quickplot_rd(pdatard5,"ex3")+
+  theme(legend.position=c(0.8,0.8))+
+  scale_color_identity(name="Restraints",labels=c("RV1","RV2","RV3"),guide="legend")
 
 
 
@@ -240,6 +250,8 @@ plot_rd5<-plot_rd5+
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
         axis.title.y = element_blank() )
+  #guides(color=guide_legend())
+  #theme(legend.position="left")
 combiplot2=plot_rd3+plot_rd5+ylim(0,9)+theme(plot.margin=unit(c(0,1,0,0), 'cm'))
                        
 
@@ -272,7 +284,9 @@ plot_rd7<-plot_rd7+rremove("ylab")+
   ylim(0,1)+
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
-        axis.title.y = element_blank() )
+        axis.title.y = element_blank() )+
+  theme(legend.position=c(0.8,0.8))+
+  scale_color_identity(name="Restraints",labels=c("RO1","RO2","RO3"),guide="legend")
 combiplot4<-plot_rd8+plot_rd7+theme(plot.margin=unit(c(0,1,0,0), 'cm'))
 ggsave("rdcombi_taapdb2425_k0_k400_ex3.png",combiplot4,device=png,width=PWIDTH,height=PHEIGHT,dpi=PDPI,limitsize=FALSE,type="cairo-png")
 
@@ -297,7 +311,9 @@ plot_rd10<-plot_rd10+rremove("ylab")+
   
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
-        axis.title.y = element_blank() )
+        axis.title.y = element_blank() )+
+  theme(legend.position=c(0.2,0.8))+
+  scale_color_identity(name="Restraints",labels=c("RO1","RO2","RO3"),guide="legend")
 combiplot3<-plot_rd9+plot_rd10+ylim(0,1.5)+theme(plot.margin=unit(c(0,1,0,0), 'cm'))
                      
 ggsave("rdcombi_tablit2425_k3_k100_ex3.png",combiplot3,device=png,width=PWIDTH,height=PHEIGHT,dpi=PDPI,limitsize=FALSE,type="cairo-png")
