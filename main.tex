@@ -95,8 +95,7 @@
 \maketitle{}
 \end{titlepage}
 \section*{Abstract}
-    
-    For protein-ligand affinity at binding sites, the relative (and absolute) binding free energy is arguably the most important indicator. Traditionally, calculating these energies is done using a model of "alchemical scaling" directly from one molecule of interest to another. The 'common-core serial-atom-insertion' framework \texttt{Transformato} instead allows to efficiently divide the problem into sequential fragments along mutation paths of actual atoms. However, complications may arise when ligands leave the binding site during simulation. This work presents a possible solution by enabling both automatic and manual addition of restraints to the system.
+    The knowledge of relative (and absolute) binding free energy differences is essential to quantify the binding affinities of a series of ligands to a protein binding site of interest. Traditionally, calculating these energies is done using direct "alchemical scaling" from one molecule of interest to another. The 'common-core serial-atom-insertion' framework as implemented in \texttt{Transformato} instead allows to efficiently divide the problem into sequential fragments along mutation paths of actual atoms. However, complications may arise when ligands leave the binding site during simulation. This work presents a possible solution by enabling both automatic and manual addition of restraints to the system.
 \vspace{\fill}
 \section*{Notes}
 \noindent\begin{minipage}{0.7\textwidth}
@@ -218,7 +217,7 @@ Both bonded and nonbonded forces are generally given an explicit set of paramete
     
     \item Urey-Bradley, an optional modification of the angle term\\
     
-    $E_{Urey-Bradley}^{ik}=k(r_{ik}-r^{ik}_{eq})^2$ - a simple harmonic potential in the distance between the two outer atoms $i$ and $k$ of the angle formed by atoms $i$, $j$, and $k$. It depends on their distance $r_{ik}$, the Urey-Bradley force constant and the and Urey-Bradley equilibrium distance $r^{ik}_{eq}$.
+    $E_{Urey-Bradley}^{ik}=k(r_{ik}-r^{ik}_{eq})^2$ - a simple harmonic potential in the distance between the two outer atoms $i$ and $k$ of the angle formed by atoms $i$, $j$, and $k$. It depends on their distance $r_{ik}$, the Urey-Bradley force constant and the equilibrium distance $r^{ik}_{eq}$.
 \end{itemize}
 
 
@@ -254,14 +253,14 @@ CG2D1  CG331  NG2P1  HGR52     18.00  0     0.00 ! SCH2, xxwy
 The so-called nonbonded terms consist of van-der-Waals (vdW) and electrostatic interactions.
 The van-der-Waals force represents the non-polar attractive and repulsive forces between nonbonded atoms and is usually represented by a Lennard-Jones (LJ) potential as given in Eq.\ref{eq:ljstandard}, with $\epsilon_i, \epsilon_j$ and $\sigma_i, \sigma_j$ being atom-specific constants often referred to as "softness" and "interaction range" respectively. Atom types are combined by using the Lorentz-Berthelot combination rules (Eq. \ref{eq:combrules} \cite{orabiCorrectionsCHARMM36Parametrization2021,jensen_introduction_2017}) .
 \begin{equation}
-U_{LJ}(r)=\epsilon_{ij}(\frac{\sigma_{ij}}{r^{12}} - \frac{\sigma_{ij}}{r^6}) \label{eq:ljstandard} \\
+U_{LJ}(r_{ij})=4\epsilon_{ij}\left[\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12} - \left(\frac{\sigma_{ij}}{r_{ij}}\right)^6\right] \label{eq:ljstandard} \\
 \end{equation}
 \begin{equation}
 \sigma_{ij}=\frac{\sigma_i\cdot \sigma_j}{2}; \epsilon_{ij}=\sqrt{\epsilon_i \cdot \epsilon_j} \label{eq:combrules} \\
 \end{equation}
-The electrostatic interactions on the other hand are represented by the Coloumb potential as given in Eq. \ref{eq:coloumbpot}, with $q_i$,$q_j$ being the involved atomic partial charges and $\epsilon_0$ being the electric constant.
+The electrostatic interactions on the other hand are represented by the Coloumb potential as given in Eq. \ref{eq:coloumbpot}, with $q_i$,$q_j$ being the involved atomic partial charges and $\epsilon_0$ being the dielectric constant.
 \begin{equation}\label{eq:coloumbpot}
-    U_{Coloumb}(r)=\frac{1}{4 \pi \epsilon_0}\frac{q_i q_j}{r_ij}
+    U_{Coloumb}(r)=\frac{1}{4 \pi \epsilon_0}\frac{q_i q_j}{r_{ij}}
 \end{equation}
 
 The values of the force constants, equilibrium bond lengths, angles, etc. are stored in \emph{parameter files}, a short excerpt is shown in Fig.~\ref{fig:parmfile}. Not all atom types participate in all types of bonded terms; both impropers and Urey-Bradley terms are optional.
@@ -377,11 +376,13 @@ Introducing the empirical estimator $\langle g \rangle_i = N_i^{-1} \sum_{n=1}^{
 Unlike TI, BAR and mBAR are able to give accurate results even with significant changes between states $K$ and correspondingly little phase space overlap. Notably, it is able to deal with the significant changes caused by the Serial-Atom-Insertion method used by \texttt{Transformato} and was, thus, used in this work to calculate the free energy differences of interest.
 \subsection{Soft-core potentials and the van-der-Waals endpoint problem} \label{sec:vdwproblem}
 In a standard MD simulation utilizing $\lambda$-scaling, the Lennard-Jones potential $U_{LJ}$ is given by formula \ref{eq:ljlambda}, introducing the coupling factor into the standard vdW-potential given by Eq. \ref{eq:ljstandard}. This usually works rather well -  the shape of the LJ potential ensures that no two  particles inhabit the same spot. However, free energy calculations, for the reasons discussed in section \ref{sec:intstatesanddummys}, usually require the presence of \textit{dummy atoms} - which obviously do not have Lennard-Jones interactions. It's here where problems may now occur -  as there are no LJ interactions, atoms may move freely into each other. This may not seem like such a significant problem - but forces still need to be calculated. Should particles manage to inhabit the exact same position, this would result in a division by zero - problematic, but most modern MD software can handle this. 
-\begin{equation}
-U_{LJ}(r)=(1-\lambda)\epsilon_{ij}(\frac{\sigma_{ij}}{r^{12}} - \frac{\sigma_{ij}}{r^6}) \label{eq:ljlambda} \\
-\end{equation}
 
-Both more problematic and more common, however, is the case that two particles get very close to each other. This is especially common in simulations with linear coupling between $\lambda$ and the LJ potential, as for low values of $\lambda$ the interaction range may decrease to such an extent that a particle may skip the entire "well" of the potential, and directly encounter its "wall", leading to extremely high forces being applied \cite{Beutler1994Jun,boresch_avoiding_2011}; see Fig.~\ref{fig:ljandsoftcore}. In this case, (i) the derivative $\langle \frac{\delta U}{\delta\lambda} \rangle$ may diverge, and (ii) because of the sudden change in energy the entire simulation may become unstable. This is known as the \textit{van-der-Waals endpoint problem} (or \textit{-catastrophe}, for the more dramatically inclined).
+
+Both more problematic and more common, however, is the case that two particles get very close to each other. This is especially common in simulations with linear coupling between $\lambda$ and the LJ potential (Eq.~\ref{eq:ljlambda}), as for low values of $\lambda$ the interaction range may decrease to such an extent that a particle may skip the entire "well" of the potential, and directly encounter its "wall", leading to extremely high forces being applied \cite{Beutler1994Jun,boresch_avoiding_2011}; see Fig.~\ref{fig:ljandsoftcore}. 
+\begin{equation}
+U_{LJ}(r_{ij})=(1-\lambda)4\epsilon_{ij}\left[\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12} - \left(\frac{\sigma_{ij}}{r_{ij}}\right)^6\right] \label{eq:ljlambda} \\
+\end{equation}
+In this case, (i) the derivative $\langle \frac{\delta U}{\delta\lambda} \rangle$ may diverge, and (ii) because of the sudden change in energy the entire simulation may become unstable. This is known as the \textit{van-der-Waals endpoint problem} (or \textit{-catastrophe}, for the more dramatically inclined).
 
 \begin{figure}
     \centering
