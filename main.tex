@@ -380,7 +380,7 @@ In a standard MD simulation utilizing $\lambda$-scaling, the Lennard-Jones poten
 
 Both more problematic and more common, however, is the case that two particles get very close to each other. This is especially common in simulations with linear coupling between $\lambda$ and the LJ potential (Eq.~\ref{eq:ljlambda}), as for low values of $\lambda$ the interaction range may decrease to such an extent that a particle may skip the entire "well" of the potential, and directly encounter its "wall", leading to extremely high forces being applied \cite{Beutler1994Jun,boresch_avoiding_2011}; see Fig.~\ref{fig:ljandsoftcore}. 
 \begin{equation}
-U_{LJ}(r_{ij})=(1-\lambda)4\epsilon_{ij}\left[\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12} - \left(\frac{\sigma_{ij}}{r_{ij}}\right)^6\right] \label{eq:ljlambda} \\
+U_{LJ}(r_{ij})=\lambda\,4\epsilon_{ij}\left[\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12} - \left(\frac{\sigma_{ij}}{r_{ij}}\right)^6\right] \label{eq:ljlambda} \\
 \end{equation}
 In this case, (i) the derivative $\langle \frac{\delta U}{\delta\lambda} \rangle$ may diverge, and (ii) because of the sudden change in energy the entire simulation may become unstable. This is known as the \textit{van-der-Waals endpoint problem} (or \textit{-catastrophe}, for the more dramatically inclined).
 
@@ -391,9 +391,10 @@ In this case, (i) the derivative $\langle \frac{\delta U}{\delta\lambda} \rangle
     \label{fig:ljandsoftcore}
 \end{figure}
 
-To avoid this problem, soft-core potentials dependent on the coupling factor $\lambda$ were introduced as shown in Equation \ref{eq:ljsoftcore}\cite{Beutler1994Jun}:
+To avoid this problem, soft-core potentials dependent on the coupling factor $\lambda$ were introduced as shown in Equation \ref{eq:ljsoftcore}\cite{boresch_avoiding_2011}, with $\delta$ a positive constant (typically, $\delta=5$~\AA\textsuperscript{2}):
 \begin{equation}
-U_{LJ}^{SC}(r,\lambda)=(1-\lambda)(\frac{A}{(r^2 +\lambda \delta)^6 }-\frac{B}{(r^6 +\lambda \delta)^3})
+%U_{LJ}^{SC}(r,\lambda)=(1-\lambda)(\frac{A}{(r^2 +\lambda \delta)^6 }-\frac{B}{(r^6 +\lambda \delta)^3})
+U_{LJ}^{SC}(r,\lambda)=\lambda\,4\epsilon_ij \left[\frac{\sigma_{ij}^{12}}{(r^2_{ij}+(1-\lambda)\delta)^6}-\frac{\sigma_{ij}^6}{(r^2_{ij}+(1-\lambda)\delta)^3} \right]
 \label{eq:ljsoftcore}
 \end{equation}
 These mostly solve the problem, as there can now be no division by zero and the fractions remain finite in all circumstances. They can, however, be computationally expensive  - especially for MD engines lacking native support for them\cite{Li2020Aug}. It is important to note that \texttt{Transformato} for this reason does \textbf{not} use soft-core potentials, but rather the "serial-atom-insertion" approach (see section \ref{sec:tf_principles}).
